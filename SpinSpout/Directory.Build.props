@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <AssemblyName>SpinSpout</AssemblyName>
+        <Product>$(AssemblyName)</Product>
+        <Version>0.0.0</Version>
+        
+        <BaseGameDir>D:\Steam\steamapps\common\Spin Rhythm</BaseGameDir>
+    </PropertyGroup>
+</Project>
