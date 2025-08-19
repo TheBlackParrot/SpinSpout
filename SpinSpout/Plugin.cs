@@ -46,8 +46,20 @@ public partial class Plugin : BaseUnityPlugin
 
     private void OnDestroy()
     {
-        HarmonyPatcher.UnpatchSelf();
         _mainCameraRenderTexture.Release();
+        _secondaryCameraRenderTexture.Release();
+        
+        foreach (TextureSpoutSender textureSpoutSender in FindObjectsByType<TextureSpoutSender>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            textureSpoutSender.sourceTexture = null;
+                
+            if (textureSpoutSender.gameObject.TryGetComponent(out Camera camera))
+            {
+                camera.targetTexture = null;
+            }
+        }
+        
+        HarmonyPatcher.UnpatchSelf();
     }
 
     private static void UpdateRenderTexture()
