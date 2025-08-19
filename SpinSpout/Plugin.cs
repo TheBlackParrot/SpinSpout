@@ -13,6 +13,7 @@ public partial class Plugin : BaseUnityPlugin
     private static readonly Harmony HarmonyPatcher = new(MyPluginInfo.PLUGIN_GUID);
     
     private static RenderTexture _mainCameraRenderTexture;
+    private static RenderTexture _secondaryCameraRenderTexture;
 
     private static Shader _blitShader;
 
@@ -64,6 +65,7 @@ public partial class Plugin : BaseUnityPlugin
         }
         
         _mainCameraRenderTexture?.Release();
+        _secondaryCameraRenderTexture?.Release();
         
         _mainCameraRenderTexture = new RenderTexture(Width.Value, Height.Value, 32, RenderTextureFormat.ARGB32)
         {
@@ -72,19 +74,29 @@ public partial class Plugin : BaseUnityPlugin
         };
         _mainCameraRenderTexture.Create();
         
+        _secondaryCameraRenderTexture = new RenderTexture(SecondaryWidth.Value, SecondaryHeight.Value, 32, RenderTextureFormat.ARGB32)
+        {
+            filterMode = FilterMode.Bilinear,
+            antiAliasing = 2
+        };
+        _secondaryCameraRenderTexture.Create();
+        
         foreach (TextureSpoutSender textureSpoutSender in FindObjectsByType<TextureSpoutSender>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
-            textureSpoutSender.sourceTexture = _mainCameraRenderTexture;
+            bool isMainCamera = textureSpoutSender.gameObject.name == "MainCameraSpoutObject(Clone)";
+            textureSpoutSender.sourceTexture = isMainCamera ? _mainCameraRenderTexture : _secondaryCameraRenderTexture;
                 
             if (textureSpoutSender.gameObject.TryGetComponent(out Camera camera))
             {
-                camera.targetTexture = _mainCameraRenderTexture;
+                camera.targetTexture = isMainCamera ? _mainCameraRenderTexture : _secondaryCameraRenderTexture;
             }
         }
     }
 
     private static Transform _previouslyActiveSpoutCameraTransform;
     private static Camera _previouslyActiveSpoutCamera;
+    private static Transform _previouslyActiveSecondarySpoutCameraTransform;
+    private static Camera _previouslyActiveSecondarySpoutCamera;
     private static Camera _activeCamera;
     private static void MainCameraOnOnCurrentCameraChanged(Camera originalCamera)
     {
@@ -97,6 +109,7 @@ public partial class Plugin : BaseUnityPlugin
         }
         _activeCamera = originalCamera;
         
+        #region (primary camera)
         Transform currentlyActiveSpoutCameraTransform = originalCamera.transform.Find("MainCameraSpoutObject(Clone)");
         if (currentlyActiveSpoutCameraTransform == null)
         {
@@ -111,6 +124,7 @@ public partial class Plugin : BaseUnityPlugin
             Camera mainCamera = currentlyActiveSpoutCameraObject.AddComponent<Camera>();
             mainCamera.CopyFrom(originalCamera);
             mainCamera.targetTexture = _mainCameraRenderTexture;
+            
             TextureSpoutSender mainCameraSpoutSender = mainCamera.gameObject.AddComponent<TextureSpoutSender>();
             mainCameraSpoutSender.sourceTexture = _mainCameraRenderTexture;
             mainCameraSpoutSender.blitShader = _blitShader;
@@ -135,6 +149,49 @@ public partial class Plugin : BaseUnityPlugin
             Logger.LogInfo("Disabled inactive Spout2 camera");
         }
         _previouslyActiveSpoutCameraTransform = currentlyActiveSpoutCameraTransform;
+        #endregion (primary camera)
+        
+        #region (secondary camera)
+        currentlyActiveSpoutCameraTransform = originalCamera.transform.Find("SecondaryCameraSpoutObject(Clone)");
+        if (currentlyActiveSpoutCameraTransform == null)
+        {
+            Logger.LogInfo($"Creating secondary Spout2 camera on object {originalCamera.name}...");
+            
+            currentlyActiveSpoutCameraTransform = Instantiate(new GameObject("SecondaryCameraSpoutObject"), originalCamera.gameObject.transform).transform;
+            GameObject currentlyActiveSpoutCameraObject = currentlyActiveSpoutCameraTransform.gameObject;
+            currentlyActiveSpoutCameraObject.tag = "MainCamera";
+            
+            currentlyActiveSpoutCameraObject.AddComponent<Skybox>();
+            
+            Camera mainCamera = currentlyActiveSpoutCameraObject.AddComponent<Camera>();
+            mainCamera.CopyFrom(originalCamera);
+            mainCamera.targetTexture = _secondaryCameraRenderTexture;
+            
+            TextureSpoutSender mainCameraSpoutSender = mainCamera.gameObject.AddComponent<TextureSpoutSender>();
+            mainCameraSpoutSender.sourceTexture = _secondaryCameraRenderTexture;
+            mainCameraSpoutSender.blitShader = _blitShader;
+            mainCameraSpoutSender.channelName = "SpinSpout_SecondaryCamera";
+            mainCameraSpoutSender.AlphaSupport = false;
+            mainCameraSpoutSender.enabled = Enabled.Value;
+            _previouslyActiveSecondarySpoutCamera = mainCamera;
+            
+            Logger.LogInfo($"Created secondary Spout2 camera on object {originalCamera.name}");
+        }
+        else
+        {
+            Logger.LogInfo($"Secondary Spout2 camera on object {originalCamera.name} already exists");
+            
+            currentlyActiveSpoutCameraTransform.gameObject.SetActive(true);
+            _previouslyActiveSecondarySpoutCamera = currentlyActiveSpoutCameraTransform.gameObject.GetComponent<Camera>();
+        }
+        
+        if (_previouslyActiveSecondarySpoutCameraTransform != null)
+        {
+            _previouslyActiveSecondarySpoutCameraTransform.gameObject.SetActive(false);
+            Logger.LogInfo("Disabled inactive secondary Spout2 camera");
+        }
+        _previouslyActiveSecondarySpoutCameraTransform = currentlyActiveSpoutCameraTransform;
+        #endregion (secondary camera)
     }
 
     [HarmonyPatch]
@@ -154,6 +211,10 @@ public partial class Plugin : BaseUnityPlugin
             {
                 _previouslyActiveSpoutCamera.fieldOfView = value;
             }
+            if (_previouslyActiveSecondarySpoutCamera != null)
+            {
+                _previouslyActiveSecondarySpoutCamera.fieldOfView = value;
+            }
         }
 
         [HarmonyPatch(typeof(Skybox), nameof(Skybox.material), MethodType.Setter)]
@@ -161,20 +222,21 @@ public partial class Plugin : BaseUnityPlugin
         // ReSharper disable once InconsistentNaming
         private static void FixSkyboxMaterial(Skybox __instance, ref Material value)
         {
-            if (_previouslyActiveSpoutCameraTransform == null)
+            if (__instance.gameObject.name.Contains("Spout"))
             {
                 return;
             }
 
-            if (!_previouslyActiveSpoutCameraTransform.gameObject.TryGetComponent(out Skybox skybox))
+            _previouslyActiveSpoutCameraTransform.gameObject.TryGetComponent(out Skybox skybox);
+            _previouslyActiveSecondarySpoutCameraTransform.gameObject.TryGetComponent(out Skybox secondarySkybox);
+
+            if (skybox == __instance)
             {
                 return;
             }
             
-            if (skybox != __instance)
-            {
-                skybox.material = value;
-            }
+            skybox.material = value;
+            secondarySkybox.material = value;
         }
     }
 }
