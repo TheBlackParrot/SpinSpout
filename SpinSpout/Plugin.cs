@@ -93,6 +93,21 @@ public partial class Plugin : BaseUnityPlugin
         }
     }
 
+    private static void UpdateCameraTransforms()
+    {
+        if (_previouslyActiveSpoutCameraTransform != null)
+        {
+            _previouslyActiveSpoutCameraTransform.localPosition = Offset.Value;
+            _previouslyActiveSpoutCameraTransform.localRotation = Quaternion.Euler(Rotation.Value);
+        }
+        
+        if (_previouslyActiveSecondarySpoutCameraTransform != null)
+        {
+            _previouslyActiveSecondarySpoutCameraTransform.localPosition = SecondaryOffset.Value;
+            _previouslyActiveSecondarySpoutCameraTransform.localRotation = Quaternion.Euler(SecondaryRotation.Value);
+        }
+    }
+
     private static Transform _previouslyActiveSpoutCameraTransform;
     private static Camera _previouslyActiveSpoutCamera;
     private static Transform _previouslyActiveSecondarySpoutCameraTransform;
@@ -192,6 +207,8 @@ public partial class Plugin : BaseUnityPlugin
         }
         _previouslyActiveSecondarySpoutCameraTransform = currentlyActiveSpoutCameraTransform;
         #endregion (secondary camera)
+
+        UpdateCameraTransforms();
     }
 
     [HarmonyPatch]
