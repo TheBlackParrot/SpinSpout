@@ -18,6 +18,9 @@ public partial class Plugin
 
     public static ConfigEntry<Vector3> Offset;
     public static ConfigEntry<Vector3> Rotation;
+
+    public static ConfigEntry<bool> FieldOfViewIsStatic;
+    public static ConfigEntry<float> FieldOfView;
     
     public static ConfigEntry<bool> SecondaryCameraEnabled;
     
@@ -26,6 +29,9 @@ public partial class Plugin
     
     public static ConfigEntry<Vector3> SecondaryOffset;
     public static ConfigEntry<Vector3> SecondaryRotation;
+    
+    public static ConfigEntry<bool> SecondaryFieldOfViewIsStatic;
+    public static ConfigEntry<float> SecondaryFieldOfView;
 
     private void RegisterConfigEntries()
     {
@@ -57,6 +63,17 @@ public partial class Plugin
             "The relative rotation of the secondary Spout2 camera");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryRotation", "Secondary Rotation");
         
+        FieldOfViewIsStatic = Config.Bind("FOV", nameof(FieldOfViewIsStatic), false, "Forces the Spout2 camera's field of view");
+        TranslationHelper.AddTranslation("SpinSpout_FOVIsStatic", "Static Field of View");
+        FieldOfView = Config.Bind("FOV", nameof(FieldOfView), 45.0f, "The field of view of the Spout2 camera");
+        TranslationHelper.AddTranslation("SpinSpout_FOV", "Field of View");
+        SecondaryFieldOfViewIsStatic = Config.Bind("FOV", nameof(SecondaryFieldOfViewIsStatic), false,
+            "Forces the secondary Spout2 camera's field of view");
+        TranslationHelper.AddTranslation("SpinSpout_SecondaryFOVIsStatic", "Secondary Static Field of View");
+        SecondaryFieldOfView = Config.Bind("FOV", nameof(SecondaryFieldOfView), 45.0f,
+            "The field of view of the secondary Spout2 camera");
+        TranslationHelper.AddTranslation("SpinSpout_SecondaryFOV", "Secondary Field of View");
+        
         TranslationHelper.AddTranslation("SpinSpout_Resolution", "Resolution");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryResolution", "Secondary Camera Resolution");
     }
@@ -77,7 +94,6 @@ public partial class Plugin
         #region Enabled
         CustomGroup enabledGroup = UIHelper.CreateGroup(modGroup, "EnabledGroup");
         enabledGroup.LayoutDirection = Axis.Horizontal;
-        //UIHelper.CreateLabel(enabledGroup, "EnabledLabel", "SpinSpout_Enabled");
         UIHelper.CreateSmallToggle(enabledGroup, "Enabled", "SpinSpout_Enabled", Enabled.Value, value =>
         {
             Enabled.Value = value;
@@ -356,6 +372,64 @@ public partial class Plugin
             UpdateCameraTransforms();
         });
         secondaryRotZInput.InputField.SetText(SecondaryRotation.Value.z.ToString(CultureInfo.InvariantCulture));
+        #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "FOVHeader", "SpinSpout_FOV", false);
+        
+        #region FOVIsStatic
+        CustomGroup fovIsStaticGroup = UIHelper.CreateGroup(modGroup, "FOVIsStaticGroup");
+        fovIsStaticGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(fovIsStaticGroup, "FOVIsStatic", "SpinSpout_FOVIsStatic", FieldOfViewIsStatic.Value,
+            value =>
+            {
+                FieldOfViewIsStatic.Value = value;
+                UpdateCameraFieldOfViews();
+            });
+        #endregion
+        
+        #region FOV
+        CustomGroup fovGroup = UIHelper.CreateGroup(modGroup, "FOVGroup");
+        fovGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(fovGroup, "FOVLabel", "SpinSpout_FOV");
+        CustomInputField fovInput = UIHelper.CreateInputField(fovGroup, "FOVInput", (_, newValue) =>
+        {
+            if (!float.TryParse(newValue, out float value))
+            {
+                return;
+            }
+            
+            FieldOfView.Value = value;
+            UpdateCameraFieldOfViews();
+        });
+        fovInput.InputField.SetText(FieldOfView.Value.ToString(CultureInfo.InvariantCulture));
+        #endregion
+        
+        #region SecondaryFOVIsStatic
+        CustomGroup secondaryFovIsStaticGroup = UIHelper.CreateGroup(modGroup, "SecondaryFOVIsStaticGroup");
+        secondaryFovIsStaticGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(secondaryFovIsStaticGroup, "SecondaryFOVIsStatic", "SpinSpout_SecondaryFOVIsStatic",
+            SecondaryFieldOfViewIsStatic.Value, value =>
+            {
+                SecondaryFieldOfViewIsStatic.Value = value;
+                UpdateCameraFieldOfViews();
+            });
+        #endregion
+        
+        #region SecondaryFOV
+        CustomGroup secondaryFovGroup = UIHelper.CreateGroup(modGroup, "FOVGroup");
+        secondaryFovGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(secondaryFovGroup, "FOVLabel", "SpinSpout_FOV");
+        CustomInputField secondaryFovInput = UIHelper.CreateInputField(secondaryFovGroup, "SecondaryFOVInput", (_, newValue) =>
+        {
+            if (!float.TryParse(newValue, out float value))
+            {
+                return;
+            }
+            
+            SecondaryFieldOfView.Value = value;
+            UpdateCameraFieldOfViews();
+        });
+        secondaryFovInput.InputField.SetText(SecondaryFieldOfView.Value.ToString(CultureInfo.InvariantCulture));
         #endregion
     }
 }

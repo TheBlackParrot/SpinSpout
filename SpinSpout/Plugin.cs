@@ -120,6 +120,24 @@ public partial class Plugin : BaseUnityPlugin
         }
     }
 
+    private static void UpdateCameraFieldOfViews()
+    {
+        if (_previouslyActiveSpoutCamera == null ||
+            _previouslyActiveSecondarySpoutCamera == null ||
+            _activeCamera == null)
+        {
+            return;
+        }
+
+        _previouslyActiveSpoutCamera.fieldOfView = FieldOfViewIsStatic.Value
+            ? FieldOfView.Value
+            : _activeCamera.fieldOfView;
+        
+        _previouslyActiveSecondarySpoutCamera.fieldOfView = SecondaryFieldOfViewIsStatic.Value
+            ? SecondaryFieldOfView.Value
+            : _activeCamera.fieldOfView;
+    }
+
     private static Transform _previouslyActiveSpoutCameraTransform;
     private static Camera _previouslyActiveSpoutCamera;
     private static Transform _previouslyActiveSecondarySpoutCameraTransform;
@@ -221,6 +239,7 @@ public partial class Plugin : BaseUnityPlugin
         #endregion (secondary camera)
 
         UpdateCameraTransforms();
+        UpdateCameraFieldOfViews();
     }
 
     [HarmonyPatch]
@@ -236,11 +255,11 @@ public partial class Plugin : BaseUnityPlugin
                 return;
             }
         
-            if (_previouslyActiveSpoutCamera != null)
+            if (_previouslyActiveSpoutCamera != null && !FieldOfViewIsStatic.Value)
             {
                 _previouslyActiveSpoutCamera.fieldOfView = value;
             }
-            if (_previouslyActiveSecondarySpoutCamera != null)
+            if (_previouslyActiveSecondarySpoutCamera != null && !SecondaryFieldOfViewIsStatic.Value)
             {
                 _previouslyActiveSecondarySpoutCamera.fieldOfView = value;
             }
