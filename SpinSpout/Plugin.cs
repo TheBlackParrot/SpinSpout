@@ -138,6 +138,20 @@ public partial class Plugin : BaseUnityPlugin
             : _activeCamera.fieldOfView;
     }
 
+    private static readonly int HudLayerMask = ~LayerMask.GetMask("Hud", "UI");
+    private static void UpdateCameraHudCulling()
+    {
+        if (_previouslyActiveSpoutCamera == null ||
+            _previouslyActiveSecondarySpoutCamera == null ||
+            _activeCamera == null)
+        {
+            return;
+        }
+        
+        _previouslyActiveSpoutCamera.cullingMask = ShowHud.Value ? _activeCamera.cullingMask : HudLayerMask;
+        _previouslyActiveSecondarySpoutCamera.cullingMask = SecondaryShowHud.Value ? _activeCamera.cullingMask : HudLayerMask;
+    }
+
     private static Transform _previouslyActiveSpoutCameraTransform;
     private static Camera _previouslyActiveSpoutCamera;
     private static Transform _previouslyActiveSecondarySpoutCameraTransform;
@@ -240,6 +254,7 @@ public partial class Plugin : BaseUnityPlugin
 
         UpdateCameraTransforms();
         UpdateCameraFieldOfViews();
+        UpdateCameraHudCulling();
     }
 
     [HarmonyPatch]

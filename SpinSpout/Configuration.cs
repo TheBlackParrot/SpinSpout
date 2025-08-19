@@ -21,6 +21,8 @@ public partial class Plugin
 
     public static ConfigEntry<bool> FieldOfViewIsStatic;
     public static ConfigEntry<float> FieldOfView;
+
+    public static ConfigEntry<bool> ShowHud;
     
     public static ConfigEntry<bool> SecondaryCameraEnabled;
     
@@ -32,6 +34,8 @@ public partial class Plugin
     
     public static ConfigEntry<bool> SecondaryFieldOfViewIsStatic;
     public static ConfigEntry<float> SecondaryFieldOfView;
+    
+    public static ConfigEntry<bool> SecondaryShowHud;
 
     private void RegisterConfigEntries()
     {
@@ -73,6 +77,12 @@ public partial class Plugin
         SecondaryFieldOfView = Config.Bind("FOV", nameof(SecondaryFieldOfView), 45.0f,
             "The field of view of the secondary Spout2 camera");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryFOV", "Secondary Field of View");
+        
+        TranslationHelper.AddTranslation("SpinSpout_Culling", "Culling");
+        ShowHud = Config.Bind("Culling", nameof(ShowHud), true, "Render the HUD to the Spout2 camera");
+        TranslationHelper.AddTranslation("SpinSpout_ShowHUD", "Show HUD");
+        SecondaryShowHud = Config.Bind("Culling", nameof(SecondaryShowHud), true, "Render the HUD to the secondary Spout2 camera");
+        TranslationHelper.AddTranslation("SpinSpout_SecondaryShowHUD", "Show HUD on Secondary");
         
         TranslationHelper.AddTranslation("SpinSpout_Resolution", "Resolution");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryResolution", "Secondary Camera Resolution");
@@ -430,6 +440,29 @@ public partial class Plugin
             UpdateCameraFieldOfViews();
         });
         secondaryFovInput.InputField.SetText(SecondaryFieldOfView.Value.ToString(CultureInfo.InvariantCulture));
+        #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "CullingHeader", "SpinSpout_Culling", false);
+        
+        #region ShowHUD
+        CustomGroup showHudGroup = UIHelper.CreateGroup(modGroup, "ShowHUDGroup");
+        showHudGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(showHudGroup, "ShowHUD", "SpinSpout_ShowHUD", ShowHud.Value, value =>
+        {
+            ShowHud.Value = value;
+            UpdateCameraHudCulling();
+        });
+        #endregion
+        
+        #region SecondaryShowHUD
+        CustomGroup secondaryShowHudGroup = UIHelper.CreateGroup(modGroup, "SecondaryShowHUDGroup");
+        secondaryShowHudGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(secondaryShowHudGroup, "SecondaryShowHUD", "SpinSpout_SecondaryShowHUD",
+            SecondaryShowHud.Value, value =>
+        {
+            SecondaryShowHud.Value = value;
+            UpdateCameraHudCulling();
+        });
         #endregion
     }
 }
