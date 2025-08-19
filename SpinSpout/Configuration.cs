@@ -72,7 +72,7 @@ public partial class Plugin
     private static void RootModPageOnOnPageLoad(Transform rootModPageTransform)
     {
         CustomGroup modGroup = UIHelper.CreateGroup(rootModPageTransform, nameof(SpinSpout));
-        UIHelper.CreateSectionHeader(modGroup, "ModGroupSection", "SpinSpout_Name", false);
+        UIHelper.CreateSectionHeader(modGroup, "ModGroupHeader", "SpinSpout_Name", false);
         
         #region Enabled
         CustomGroup enabledGroup = UIHelper.CreateGroup(modGroup, "EnabledGroup");
@@ -124,6 +124,8 @@ public partial class Plugin
             }
         });
         #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "ResolutionHeader", "SpinSpout_Resolution", false);
         
         #region Resolution
         CustomGroup resolutionGroup = UIHelper.CreateGroup(modGroup, "ResolutionGroup");
@@ -183,6 +185,8 @@ public partial class Plugin
         });
         secondaryHeightInput.InputField.SetText(SecondaryHeight.Value.ToString());
         #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "OffsetHeader", "SpinSpout_Offset", false);
         
         #region PositionOffset
         CustomGroup offsetGroup = UIHelper.CreateGroup(modGroup, "OffsetGroup");
@@ -267,6 +271,8 @@ public partial class Plugin
         });
         secondaryZInput.InputField.SetText(SecondaryOffset.Value.z.ToString(CultureInfo.InvariantCulture));
         #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "RotationHeader", "SpinSpout_Rotation", false);
         
         #region RotationOffset
         CustomGroup rotationGroup = UIHelper.CreateGroup(modGroup, "RotationGroup");
