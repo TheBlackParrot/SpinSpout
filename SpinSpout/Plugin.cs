@@ -108,6 +108,11 @@ public partial class Plugin : BaseUnityPlugin
         {
             if (textureSpoutSender.gameObject.name == "Spectator Cam")
             {
+                textureSpoutSender.sourceTexture = _spectatorCameraRenderTexture;
+                if (textureSpoutSender.gameObject.TryGetComponent(out Camera vrCamera))
+                {
+                    vrCamera.targetTexture = _spectatorCameraRenderTexture;
+                }
                 continue;
             }
             
