@@ -37,6 +37,10 @@ public partial class Plugin
     
     public static ConfigEntry<bool> SecondaryShowHud;
 
+    public static ConfigEntry<bool> TakeOverVRSpectatorCamera;
+    public static ConfigEntry<int> VRSpectatorWidth;
+    public static ConfigEntry<int> VRSpectatorHeight;
+
     private void RegisterConfigEntries()
     {
         TranslationHelper.AddTranslation("SpinSpout_Name", "SpinSpout");
@@ -84,8 +88,20 @@ public partial class Plugin
         SecondaryShowHud = Config.Bind("Culling", nameof(SecondaryShowHud), true, "Render the HUD to the secondary Spout2 camera");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryShowHUD", "Show HUD on Secondary");
         
+        TranslationHelper.AddTranslation("SpinSpout_VR", "VR");
+        TakeOverVRSpectatorCamera = Config.Bind("VR", nameof(TakeOverVRSpectatorCamera), true,
+            "Take over the Spectator Camera while in VR mode");
+        TranslationHelper.AddTranslation("SpinSpout_TakeOverVRSpectatorCamera", "Take Over VR Spectator Camera");
+        VRSpectatorWidth = Config.Bind("VR", nameof(VRSpectatorWidth), 2560,
+            "The width of the Spout2 output for the VR Spectator Camera");
+        TranslationHelper.AddTranslation("SpinSpout_VRSpectatorWidth", "VR Spectator Width");
+        VRSpectatorHeight = Config.Bind("VR", nameof(VRSpectatorHeight), 1440,
+            "The height of the Spout2 output for the VR Spectator Camera");
+        TranslationHelper.AddTranslation("SpinSpout_VRSpectatorHeight", "VR Spectator Height");
+        
         TranslationHelper.AddTranslation("SpinSpout_Resolution", "Resolution");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryResolution", "Secondary Camera Resolution");
+        TranslationHelper.AddTranslation("SpinSpout_VRSpectatorResolution", "VR Spectator Camera Resolution");
     }
 
     private static void CreateModPage()
@@ -463,6 +479,49 @@ public partial class Plugin
             SecondaryShowHud.Value = value;
             UpdateCameraHudCulling();
         });
+        #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "VRHeader", "SpinSpout_VR", false);
+        
+        #region TakeOverVRSpectatorCamera
+        CustomGroup takeOverVRSpectatorCameraGroup = UIHelper.CreateGroup(modGroup, "TakeOverVRSpectatorCameraGroup");
+        takeOverVRSpectatorCameraGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(takeOverVRSpectatorCameraGroup, "TakeOverVRSpectatorCamera",
+            "SpinSpout_TakeOverVRSpectatorCamera", TakeOverVRSpectatorCamera.Value, value =>
+        {
+            TakeOverVRSpectatorCamera.Value = value;
+            UpdateVRSpectatorCamera();
+        });
+        #endregion
+        
+        #region VRSpectatorResolution
+        CustomGroup vrSpectatorResolutionGroup = UIHelper.CreateGroup(modGroup, "VRSpectatorResolutionGroup");
+        vrSpectatorResolutionGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(vrSpectatorResolutionGroup, "VRSpectatorResolutionLabel", "SpinSpout_VRSpectatorResolution");
+        CustomInputField vrSpectatorWidthInput = UIHelper.CreateInputField(vrSpectatorResolutionGroup,
+            "VRSpectatorWidthInput", (_, newValue) =>
+            {
+                if (!int.TryParse(newValue, out int value))
+                {
+                    return;
+                }
+            
+                VRSpectatorWidth.Value = value;
+                UpdateRenderTexture();
+            });
+        vrSpectatorWidthInput.InputField.SetText(VRSpectatorWidth.Value.ToString());
+        
+        CustomInputField vrSpectatorHeightInput = UIHelper.CreateInputField(vrSpectatorResolutionGroup, "VRSpectatorHeightInput", (_, newValue) =>
+        {
+            if (!int.TryParse(newValue, out int value))
+            {
+                return;
+            }
+            
+            VRSpectatorHeight.Value = value;
+            UpdateRenderTexture();
+        });
+        vrSpectatorHeightInput.InputField.SetText(VRSpectatorHeight.Value.ToString());
         #endregion
     }
 }

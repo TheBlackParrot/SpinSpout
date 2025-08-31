@@ -64,6 +64,13 @@
         <Reference Include="UnityEngine.UI">
             <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\UnityEngine.UI.dll</HintPath>
         </Reference>
+        <Reference Include="Unity.XR.CoreUtils">
+            <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\Unity.XR.CoreUtils.dll</HintPath>
+            <Publicize>true</Publicize>
+        </Reference>
+        <Reference Include="Unity.XR.Interaction.Toolkit">
+            <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\Unity.XR.Interaction.Toolkit.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>

@@ -2,6 +2,7 @@
 using BepInEx.Logging;
 using HarmonyLib;
 using SpinSpout.Spout;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 
 namespace SpinSpout;
@@ -14,6 +15,7 @@ public partial class Plugin : BaseUnityPlugin
     
     private static RenderTexture _mainCameraRenderTexture;
     private static RenderTexture _secondaryCameraRenderTexture;
+    private static RenderTexture _spectatorCameraRenderTexture;
 
     private static Shader _blitShader;
 
@@ -48,6 +50,7 @@ public partial class Plugin : BaseUnityPlugin
     {
         _mainCameraRenderTexture.Release();
         _secondaryCameraRenderTexture.Release();
+        _spectatorCameraRenderTexture.Release();
         
         foreach (TextureSpoutSender textureSpoutSender in FindObjectsByType<TextureSpoutSender>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -78,6 +81,7 @@ public partial class Plugin : BaseUnityPlugin
         
         _mainCameraRenderTexture?.Release();
         _secondaryCameraRenderTexture?.Release();
+        _spectatorCameraRenderTexture?.Release();
         
         _mainCameraRenderTexture = new RenderTexture(Width.Value, Height.Value, 32, RenderTextureFormat.ARGB32)
         {
@@ -93,8 +97,20 @@ public partial class Plugin : BaseUnityPlugin
         };
         _secondaryCameraRenderTexture.Create();
         
+        _spectatorCameraRenderTexture = new RenderTexture(VRSpectatorWidth.Value, VRSpectatorHeight.Value, 32, RenderTextureFormat.ARGB32)
+        {
+            filterMode = FilterMode.Bilinear,
+            antiAliasing = 2
+        };
+        _spectatorCameraRenderTexture.Create();
+        
         foreach (TextureSpoutSender textureSpoutSender in FindObjectsByType<TextureSpoutSender>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
+            if (textureSpoutSender.gameObject.name == "Spectator Cam")
+            {
+                continue;
+            }
+            
             bool isMainCamera = textureSpoutSender.gameObject.name == "MainCameraSpoutObject(Clone)";
             textureSpoutSender.sourceTexture = isMainCamera ? _mainCameraRenderTexture : _secondaryCameraRenderTexture;
                 
@@ -150,6 +166,33 @@ public partial class Plugin : BaseUnityPlugin
         
         _previouslyActiveSpoutCamera.cullingMask = ShowHud.Value ? _activeCamera.cullingMask : HudLayerMask;
         _previouslyActiveSecondarySpoutCamera.cullingMask = SecondaryShowHud.Value ? _activeCamera.cullingMask : HudLayerMask;
+    }
+
+    private static void UpdateVRSpectatorCamera()
+    {
+        XROrigin xrOrigin = FindAnyObjectByType<XROrigin>();
+        Camera camera = xrOrigin?.CameraFloorOffsetObject.transform.Find("Spectator Cam Stable/Spectator Cam")?.GetComponent<Camera>();
+        
+        if (camera == null)
+        {
+            Logger.LogInfo("UpdateVRSpectatorCamera -- targeted camera is null");
+            return;
+        }
+
+        if (camera.TryGetComponent(out TextureSpoutSender textureSpoutSender))
+        {
+            Logger.LogInfo("UpdateVRSpectatorCamera -- TextureSpoutSender found");
+            textureSpoutSender.enabled = TakeOverVRSpectatorCamera.Value;
+            camera.targetTexture = TakeOverVRSpectatorCamera.Value ? _spectatorCameraRenderTexture : null;
+            return;
+        }
+        
+        TextureSpoutSender spectatorCameraSpoutSender = camera.gameObject.AddComponent<TextureSpoutSender>();
+        spectatorCameraSpoutSender.sourceTexture = _spectatorCameraRenderTexture;
+        spectatorCameraSpoutSender.blitShader = _blitShader;
+        spectatorCameraSpoutSender.channelName = "SpinSpout_VRSpectatorCamera";
+        spectatorCameraSpoutSender.AlphaSupport = false;
+        spectatorCameraSpoutSender.enabled = TakeOverVRSpectatorCamera.Value;
     }
 
     private static Transform _previouslyActiveSpoutCameraTransform;
@@ -300,6 +343,19 @@ public partial class Plugin : BaseUnityPlugin
             
             skybox.material = value;
             secondarySkybox.material = value;
+        }
+
+        [HarmonyPatch(typeof(XROrigin), nameof(XROrigin.TryInitializeCamera))]
+        [HarmonyPostfix]
+        // ReSharper disable once InconsistentNaming
+        private static void PatchSpectatorCamera(XROrigin __instance)
+        {
+            if (!__instance.m_CameraInitialized)
+            {
+                return;
+            }
+
+            UpdateVRSpectatorCamera();
         }
     }
 }
