@@ -83,24 +83,24 @@ public partial class Plugin : BaseUnityPlugin
         _secondaryCameraRenderTexture?.Release();
         _spectatorCameraRenderTexture?.Release();
         
-        _mainCameraRenderTexture = new RenderTexture(Width.Value, Height.Value, 32, RenderTextureFormat.ARGB32)
+        _mainCameraRenderTexture = new RenderTexture(Width.Value, Height.Value, 16, RenderTextureFormat.ARGB32)
         {
-            filterMode = FilterMode.Bilinear,
-            antiAliasing = 2
+            filterMode = FilterMode.Point,
+            antiAliasing = 1
         };
         _mainCameraRenderTexture.Create();
         
-        _secondaryCameraRenderTexture = new RenderTexture(SecondaryWidth.Value, SecondaryHeight.Value, 32, RenderTextureFormat.ARGB32)
+        _secondaryCameraRenderTexture = new RenderTexture(SecondaryWidth.Value, SecondaryHeight.Value, 16, RenderTextureFormat.ARGB32)
         {
-            filterMode = FilterMode.Bilinear,
-            antiAliasing = 2
+            filterMode = FilterMode.Point,
+            antiAliasing = 1
         };
         _secondaryCameraRenderTexture.Create();
         
-        _spectatorCameraRenderTexture = new RenderTexture(VRSpectatorWidth.Value, VRSpectatorHeight.Value, 32, RenderTextureFormat.ARGB32)
+        _spectatorCameraRenderTexture = new RenderTexture(VRSpectatorWidth.Value, VRSpectatorHeight.Value, 16, RenderTextureFormat.ARGB32)
         {
-            filterMode = FilterMode.Bilinear,
-            antiAliasing = 2
+            filterMode = FilterMode.Point,
+            antiAliasing = 1
         };
         _spectatorCameraRenderTexture.Create();
         
