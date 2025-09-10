@@ -23,6 +23,7 @@ public partial class Plugin
     public static ConfigEntry<float> FieldOfView;
 
     public static ConfigEntry<bool> ShowHud;
+    public static ConfigEntry<bool> ShowUi;
     
     public static ConfigEntry<bool> SecondaryCameraEnabled;
     
@@ -36,6 +37,7 @@ public partial class Plugin
     public static ConfigEntry<float> SecondaryFieldOfView;
     
     public static ConfigEntry<bool> SecondaryShowHud;
+    public static ConfigEntry<bool> SecondaryShowUi;
 
     public static ConfigEntry<bool> TakeOverVRSpectatorCamera;
     public static ConfigEntry<int> VRSpectatorWidth;
@@ -85,8 +87,12 @@ public partial class Plugin
         TranslationHelper.AddTranslation("SpinSpout_Culling", "Culling");
         ShowHud = Config.Bind("Culling", nameof(ShowHud), true, "Render the HUD to the Spout2 camera");
         TranslationHelper.AddTranslation("SpinSpout_ShowHUD", "Show HUD");
+        ShowUi = Config.Bind("Culling", nameof(ShowUi), true, "Render the menu UI to the Spout2 camera");
+        TranslationHelper.AddTranslation("SpinSpout_ShowUi", "Show Menu UI");
         SecondaryShowHud = Config.Bind("Culling", nameof(SecondaryShowHud), true, "Render the HUD to the secondary Spout2 camera");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryShowHUD", "Show HUD on Secondary");
+        SecondaryShowUi = Config.Bind("Culling", nameof(SecondaryShowUi), true, "Render the menu UI to the secondary Spout2 camera");
+        TranslationHelper.AddTranslation("SpinSpout_SecondaryShowUi", "Show Menu UI on Secondary");
         
         TranslationHelper.AddTranslation("SpinSpout_VR", "VR");
         TakeOverVRSpectatorCamera = Config.Bind("VR", nameof(TakeOverVRSpectatorCamera), true,
@@ -470,6 +476,16 @@ public partial class Plugin
         });
         #endregion
         
+        #region ShowUi
+        CustomGroup showUiGroup = UIHelper.CreateGroup(modGroup, "ShowUIGroup");
+        showUiGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(showUiGroup, "ShowUI", "SpinSpout_ShowUi", ShowUi.Value, value =>
+        {
+            ShowUi.Value = value;
+            UpdateCameraHudCulling();
+        });
+        #endregion
+        
         #region SecondaryShowHUD
         CustomGroup secondaryShowHudGroup = UIHelper.CreateGroup(modGroup, "SecondaryShowHUDGroup");
         secondaryShowHudGroup.LayoutDirection = Axis.Horizontal;
@@ -479,6 +495,17 @@ public partial class Plugin
             SecondaryShowHud.Value = value;
             UpdateCameraHudCulling();
         });
+        #endregion
+        
+        #region SecondaryShowUi
+        CustomGroup secondaryShowUiGroup = UIHelper.CreateGroup(modGroup, "SecondaryShowUIGroup");
+        secondaryShowUiGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(secondaryShowUiGroup, "SecondaryShowUI", "SpinSpout_SecondaryShowUi",
+            SecondaryShowUi.Value, value =>
+            {
+                SecondaryShowUi.Value = value;
+                UpdateCameraHudCulling();
+            });
         #endregion
         
         UIHelper.CreateSectionHeader(modGroup, "VRHeader", "SpinSpout_VR", false);

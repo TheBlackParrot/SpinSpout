@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using System.Collections.Generic;
+using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using SpinSpout.Spout;
@@ -158,8 +159,7 @@ public partial class Plugin : BaseUnityPlugin
             ? SecondaryFieldOfView.Value
             : _activeCamera.fieldOfView;
     }
-
-    private static readonly int HudLayerMask = ~LayerMask.GetMask("Hud", "UI");
+    
     private static void UpdateCameraHudCulling()
     {
         if (_previouslyActiveSpoutCamera == null ||
@@ -168,9 +168,20 @@ public partial class Plugin : BaseUnityPlugin
         {
             return;
         }
+
+        List<string> primaryLayerNames = [];
+        if (!ShowHud.Value) { primaryLayerNames.Add("Hud"); }
+        if (!ShowUi.Value) { primaryLayerNames.Add("UI"); }
         
-        _previouslyActiveSpoutCamera.cullingMask = ShowHud.Value ? _activeCamera.cullingMask : HudLayerMask;
-        _previouslyActiveSecondarySpoutCamera.cullingMask = SecondaryShowHud.Value ? _activeCamera.cullingMask : HudLayerMask;
+        List<string> secondaryLayerNames = [];
+        if (!SecondaryShowHud.Value) { secondaryLayerNames.Add("Hud"); }
+        if (!SecondaryShowUi.Value) { secondaryLayerNames.Add("UI"); }
+        
+        int primaryHudLayerMask = ~LayerMask.GetMask(primaryLayerNames.ToArray());
+        int secondaryHudLayerMask = ~LayerMask.GetMask(secondaryLayerNames.ToArray());
+        
+        _previouslyActiveSpoutCamera.cullingMask = primaryHudLayerMask;
+        _previouslyActiveSecondarySpoutCamera.cullingMask = secondaryHudLayerMask;
     }
 
     private static void UpdateVRSpectatorCamera()
