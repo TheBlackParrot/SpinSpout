@@ -5,6 +5,8 @@ using HarmonyLib;
 using SpinSpout.Spout;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace SpinSpout;
 
@@ -243,6 +245,14 @@ public partial class Plugin : BaseUnityPlugin
             mainCamera.CopyFrom(originalCamera);
             mainCamera.targetTexture = _mainCameraRenderTexture;
             
+            UniversalAdditionalCameraData originalCameraData = originalCamera.GetComponent<UniversalAdditionalCameraData>();
+            UniversalAdditionalCameraData addtlCameraData = currentlyActiveSpoutCameraObject.AddComponent<UniversalAdditionalCameraData>();
+            addtlCameraData.volumeStack = originalCameraData.volumeStack;
+            addtlCameraData.volumeLayerMask = originalCameraData.volumeLayerMask;
+            addtlCameraData.stopNaN = originalCameraData.stopNaN;
+            addtlCameraData.renderPostProcessing = true;
+            addtlCameraData.allowHDROutput = true;
+            
             TextureSpoutSender mainCameraSpoutSender = mainCamera.gameObject.AddComponent<TextureSpoutSender>();
             mainCameraSpoutSender.sourceTexture = _mainCameraRenderTexture;
             mainCameraSpoutSender.blitShader = _blitShader;
@@ -284,6 +294,14 @@ public partial class Plugin : BaseUnityPlugin
             Camera mainCamera = currentlyActiveSpoutCameraObject.AddComponent<Camera>();
             mainCamera.CopyFrom(originalCamera);
             mainCamera.targetTexture = _secondaryCameraRenderTexture;
+            
+            UniversalAdditionalCameraData originalCameraData = originalCamera.GetComponent<UniversalAdditionalCameraData>();
+            UniversalAdditionalCameraData addtlCameraData = currentlyActiveSpoutCameraObject.AddComponent<UniversalAdditionalCameraData>();
+            addtlCameraData.volumeStack = originalCameraData.volumeStack;
+            addtlCameraData.volumeLayerMask = originalCameraData.volumeLayerMask;
+            addtlCameraData.stopNaN = originalCameraData.stopNaN;
+            addtlCameraData.renderPostProcessing = true;
+            addtlCameraData.allowHDROutput = true;
             
             TextureSpoutSender mainCameraSpoutSender = mainCamera.gameObject.AddComponent<TextureSpoutSender>();
             mainCameraSpoutSender.sourceTexture = _secondaryCameraRenderTexture;

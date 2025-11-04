@@ -49,15 +49,12 @@
         <Reference Include="SSD.Game">
             <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\SSD.Game.dll</HintPath>
         </Reference>
-        <!--
         <Reference Include="Unity.RenderPipelines.Core.Runtime">
-            <HintPath>D:\Steam\steamapps\common\Spin Rhythm\SpinRhythm_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+            <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
         </Reference>
         <Reference Include="Unity.RenderPipelines.Universal.Runtime">
-            <HintPath>D:\Steam\steamapps\common\Spin Rhythm\SpinRhythm_Data\Managed\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
-            <Publicize>true</Publicize>
+            <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
         </Reference>
-        -->
         <Reference Include="Unity.TextMeshPro">
             <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\Unity.TextMeshPro.dll</HintPath>
         </Reference>
