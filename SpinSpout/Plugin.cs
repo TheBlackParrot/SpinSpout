@@ -2,6 +2,7 @@
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using SpinSpout.Patches;
 using SpinSpout.Spout;
 using Unity.XR.CoreUtils;
 using UnityEngine;
@@ -35,7 +36,7 @@ public partial class Plugin : BaseUnityPlugin
 
     private void OnEnable()
     {
-        HarmonyPatcher.PatchAll(typeof(PatchWrapper));
+        HarmonyPatcher.PatchAll(typeof(CameraPatches));
         
         StartCoroutine(Utils.AssetBundleUtils.LoadShaderAsset($"{nameof(SpinSpout)}.KlakSpoutBlitShader.assetbundle", "Assets/Blit.shader",
             shader =>
@@ -130,42 +131,42 @@ public partial class Plugin : BaseUnityPlugin
 
     private static void UpdateCameraTransforms()
     {
-        if (_previouslyActiveSpoutCameraTransform != null)
+        if (PreviouslyActiveSpoutCameraTransform != null)
         {
-            _previouslyActiveSpoutCameraTransform.localPosition = Offset.Value;
-            _previouslyActiveSpoutCameraTransform.localRotation = Quaternion.Euler(Rotation.Value);
+            PreviouslyActiveSpoutCameraTransform.localPosition = Offset.Value;
+            PreviouslyActiveSpoutCameraTransform.localRotation = Quaternion.Euler(Rotation.Value);
         }
         
-        if (_previouslyActiveSecondarySpoutCameraTransform != null)
+        if (PreviouslyActiveSecondarySpoutCameraTransform != null)
         {
-            _previouslyActiveSecondarySpoutCameraTransform.localPosition = SecondaryOffset.Value;
-            _previouslyActiveSecondarySpoutCameraTransform.localRotation = Quaternion.Euler(SecondaryRotation.Value);
+            PreviouslyActiveSecondarySpoutCameraTransform.localPosition = SecondaryOffset.Value;
+            PreviouslyActiveSecondarySpoutCameraTransform.localRotation = Quaternion.Euler(SecondaryRotation.Value);
         }
     }
 
     private static void UpdateCameraFieldOfViews()
     {
-        if (_previouslyActiveSpoutCamera == null ||
-            _previouslyActiveSecondarySpoutCamera == null ||
-            _activeCamera == null)
+        if (PreviouslyActiveSpoutCamera == null ||
+            PreviouslyActiveSecondarySpoutCamera == null ||
+            ActiveCamera == null)
         {
             return;
         }
 
-        _previouslyActiveSpoutCamera.fieldOfView = FieldOfViewIsStatic.Value
+        PreviouslyActiveSpoutCamera.fieldOfView = FieldOfViewIsStatic.Value
             ? FieldOfView.Value
-            : _activeCamera.fieldOfView;
+            : ActiveCamera.fieldOfView;
         
-        _previouslyActiveSecondarySpoutCamera.fieldOfView = SecondaryFieldOfViewIsStatic.Value
+        PreviouslyActiveSecondarySpoutCamera.fieldOfView = SecondaryFieldOfViewIsStatic.Value
             ? SecondaryFieldOfView.Value
-            : _activeCamera.fieldOfView;
+            : ActiveCamera.fieldOfView;
     }
     
     private static void UpdateCameraHudCulling()
     {
-        if (_previouslyActiveSpoutCamera == null ||
-            _previouslyActiveSecondarySpoutCamera == null ||
-            _activeCamera == null)
+        if (PreviouslyActiveSpoutCamera == null ||
+            PreviouslyActiveSecondarySpoutCamera == null ||
+            ActiveCamera == null)
         {
             return;
         }
@@ -181,11 +182,11 @@ public partial class Plugin : BaseUnityPlugin
         int primaryHudLayerMask = ~LayerMask.GetMask(primaryLayerNames.ToArray());
         int secondaryHudLayerMask = ~LayerMask.GetMask(secondaryLayerNames.ToArray());
         
-        _previouslyActiveSpoutCamera.cullingMask = primaryHudLayerMask;
-        _previouslyActiveSecondarySpoutCamera.cullingMask = secondaryHudLayerMask;
+        PreviouslyActiveSpoutCamera.cullingMask = primaryHudLayerMask;
+        PreviouslyActiveSecondarySpoutCamera.cullingMask = secondaryHudLayerMask;
     }
 
-    private static void UpdateVRSpectatorCamera()
+    internal static void UpdateVRSpectatorCamera()
     {
         XROrigin xrOrigin = FindAnyObjectByType<XROrigin>();
         Camera camera = xrOrigin?.CameraFloorOffsetObject.transform.Find("Spectator Cam Stable/Spectator Cam")?.GetComponent<Camera>();
@@ -212,21 +213,21 @@ public partial class Plugin : BaseUnityPlugin
         spectatorCameraSpoutSender.enabled = TakeOverVRSpectatorCamera.Value;
     }
 
-    private static Transform _previouslyActiveSpoutCameraTransform;
-    private static Camera _previouslyActiveSpoutCamera;
-    private static Transform _previouslyActiveSecondarySpoutCameraTransform;
-    private static Camera _previouslyActiveSecondarySpoutCamera;
-    private static Camera _activeCamera;
+    internal static Transform PreviouslyActiveSpoutCameraTransform;
+    internal static Camera PreviouslyActiveSpoutCamera;
+    internal static Transform PreviouslyActiveSecondarySpoutCameraTransform;
+    internal static Camera PreviouslyActiveSecondarySpoutCamera;
+    internal static Camera ActiveCamera;
     private static void MainCameraOnOnCurrentCameraChanged(Camera originalCamera)
     {
         Logger.LogInfo($"MainCameraOnOnCurrentCameraChanged triggered on {originalCamera.name}");
         
-        if (_activeCamera == originalCamera && _activeCamera != null)
+        if (ActiveCamera == originalCamera && ActiveCamera != null)
         {
             Logger.LogInfo("Camera is the same as the previous camera, not updating");
             return;
         }
-        _activeCamera = originalCamera;
+        ActiveCamera = originalCamera;
         
         #region (primary camera)
         Transform currentlyActiveSpoutCameraTransform = originalCamera.transform.Find("MainCameraSpoutObject(Clone)");
@@ -258,7 +259,7 @@ public partial class Plugin : BaseUnityPlugin
             mainCameraSpoutSender.channelName = "SpinSpout_MainCamera";
             mainCameraSpoutSender.AlphaSupport = false;
             mainCameraSpoutSender.enabled = Enabled.Value;
-            _previouslyActiveSpoutCamera = mainCamera;
+            PreviouslyActiveSpoutCamera = mainCamera;
             
             Logger.LogInfo($"Created Spout2 camera on object {originalCamera.name}");
         }
@@ -267,15 +268,15 @@ public partial class Plugin : BaseUnityPlugin
             Logger.LogInfo($"Spout2 camera on object {originalCamera.name} already exists");
             
             currentlyActiveSpoutCameraTransform.gameObject.SetActive(true);
-            _previouslyActiveSpoutCamera = currentlyActiveSpoutCameraTransform.gameObject.GetComponent<Camera>();
+            PreviouslyActiveSpoutCamera = currentlyActiveSpoutCameraTransform.gameObject.GetComponent<Camera>();
         }
         
-        if (_previouslyActiveSpoutCameraTransform != null)
+        if (PreviouslyActiveSpoutCameraTransform != null)
         {
-            _previouslyActiveSpoutCameraTransform.gameObject.SetActive(false);
+            PreviouslyActiveSpoutCameraTransform.gameObject.SetActive(false);
             Logger.LogInfo("Disabled inactive Spout2 camera");
         }
-        _previouslyActiveSpoutCameraTransform = currentlyActiveSpoutCameraTransform;
+        PreviouslyActiveSpoutCameraTransform = currentlyActiveSpoutCameraTransform;
         #endregion (primary camera)
         
         #region (secondary camera)
@@ -308,7 +309,7 @@ public partial class Plugin : BaseUnityPlugin
             mainCameraSpoutSender.channelName = "SpinSpout_SecondaryCamera";
             mainCameraSpoutSender.AlphaSupport = false;
             mainCameraSpoutSender.enabled = Enabled.Value;
-            _previouslyActiveSecondarySpoutCamera = mainCamera;
+            PreviouslyActiveSecondarySpoutCamera = mainCamera;
             
             Logger.LogInfo($"Created secondary Spout2 camera on object {originalCamera.name}");
         }
@@ -317,78 +318,19 @@ public partial class Plugin : BaseUnityPlugin
             Logger.LogInfo($"Secondary Spout2 camera on object {originalCamera.name} already exists");
             
             currentlyActiveSpoutCameraTransform.gameObject.SetActive(true);
-            _previouslyActiveSecondarySpoutCamera = currentlyActiveSpoutCameraTransform.gameObject.GetComponent<Camera>();
+            PreviouslyActiveSecondarySpoutCamera = currentlyActiveSpoutCameraTransform.gameObject.GetComponent<Camera>();
         }
         
-        if (_previouslyActiveSecondarySpoutCameraTransform != null)
+        if (PreviouslyActiveSecondarySpoutCameraTransform != null)
         {
-            _previouslyActiveSecondarySpoutCameraTransform.gameObject.SetActive(false);
+            PreviouslyActiveSecondarySpoutCameraTransform.gameObject.SetActive(false);
             Logger.LogInfo("Disabled inactive secondary Spout2 camera");
         }
-        _previouslyActiveSecondarySpoutCameraTransform = currentlyActiveSpoutCameraTransform;
+        PreviouslyActiveSecondarySpoutCameraTransform = currentlyActiveSpoutCameraTransform;
         #endregion (secondary camera)
 
         UpdateCameraTransforms();
         UpdateCameraFieldOfViews();
         UpdateCameraHudCulling();
-    }
-
-    [HarmonyPatch]
-    internal class PatchWrapper
-    {
-        [HarmonyPatch(typeof(Camera), nameof(Camera.fieldOfView), MethodType.Setter)]
-        [HarmonyPostfix]
-        // ReSharper disable once InconsistentNaming
-        private static void FixFieldOfView(Camera __instance, ref float value)
-        {
-            if (__instance != _activeCamera)
-            {
-                return;
-            }
-        
-            if (_previouslyActiveSpoutCamera != null && !FieldOfViewIsStatic.Value)
-            {
-                _previouslyActiveSpoutCamera.fieldOfView = value;
-            }
-            if (_previouslyActiveSecondarySpoutCamera != null && !SecondaryFieldOfViewIsStatic.Value)
-            {
-                _previouslyActiveSecondarySpoutCamera.fieldOfView = value;
-            }
-        }
-
-        [HarmonyPatch(typeof(Skybox), nameof(Skybox.material), MethodType.Setter)]
-        [HarmonyPostfix]
-        // ReSharper disable once InconsistentNaming
-        private static void FixSkyboxMaterial(Skybox __instance, ref Material value)
-        {
-            if (__instance.gameObject.name.Contains("Spout"))
-            {
-                return;
-            }
-
-            _previouslyActiveSpoutCameraTransform.gameObject.TryGetComponent(out Skybox skybox);
-            _previouslyActiveSecondarySpoutCameraTransform.gameObject.TryGetComponent(out Skybox secondarySkybox);
-
-            if (skybox == __instance)
-            {
-                return;
-            }
-            
-            skybox.material = value;
-            secondarySkybox.material = value;
-        }
-
-        [HarmonyPatch(typeof(XROrigin), nameof(XROrigin.TryInitializeCamera))]
-        [HarmonyPostfix]
-        // ReSharper disable once InconsistentNaming
-        private static void PatchSpectatorCamera(XROrigin __instance)
-        {
-            if (!__instance.m_CameraInitialized)
-            {
-                return;
-            }
-
-            UpdateVRSpectatorCamera();
-        }
     }
 }
