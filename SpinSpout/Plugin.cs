@@ -37,6 +37,7 @@ public partial class Plugin : BaseUnityPlugin
     private void OnEnable()
     {
         HarmonyPatcher.PatchAll(typeof(CameraPatches));
+        HarmonyPatcher.PatchAll(typeof(TimingBarPatches));
         
         StartCoroutine(Utils.AssetBundleUtils.LoadShaderAsset($"{nameof(SpinSpout)}.KlakSpoutBlitShader.assetbundle", "Assets/Blit.shader",
             shader =>

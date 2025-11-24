@@ -3,6 +3,7 @@ using System.Globalization;
 using BepInEx.Configuration;
 using SpinCore.Translation;
 using SpinCore.UI;
+using SpinSpout.Patches;
 using SpinSpout.Spout;
 using UnityEngine;
 
@@ -24,6 +25,7 @@ public partial class Plugin
 
     public static ConfigEntry<bool> ShowHud;
     public static ConfigEntry<bool> ShowUi;
+    public static ConfigEntry<bool> ForceShowAccuracyBar;
     
     public static ConfigEntry<bool> SecondaryCameraEnabled;
     
@@ -93,6 +95,9 @@ public partial class Plugin
         TranslationHelper.AddTranslation("SpinSpout_SecondaryShowHUD", "Show HUD on Secondary");
         SecondaryShowUi = Config.Bind("Culling", nameof(SecondaryShowUi), true, "Render the menu UI to the secondary Spout2 camera");
         TranslationHelper.AddTranslation("SpinSpout_SecondaryShowUi", "Show Menu UI on Secondary");
+        ForceShowAccuracyBar = Config.Bind("Culling", nameof(ForceShowAccuracyBar), false,
+            "Force the accuracy bar to always show regardless of culling state");
+        TranslationHelper.AddTranslation("SpinSpout_ForceShowAccuracyBar", "Always Show Accuracy Bar");
         
         TranslationHelper.AddTranslation("SpinSpout_VR", "VR");
         TakeOverVRSpectatorCamera = Config.Bind("VR", nameof(TakeOverVRSpectatorCamera), true,
@@ -506,6 +511,17 @@ public partial class Plugin
                 SecondaryShowUi.Value = value;
                 UpdateCameraHudCulling();
             });
+        #endregion
+        
+        #region ForceShowAccuracyBar
+        CustomGroup forceShowAccuracyBarGroup = UIHelper.CreateGroup(modGroup, "ForceShowAccuracyBarGroup");
+        forceShowAccuracyBarGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(forceShowAccuracyBarGroup, "ForceShowAccuracyBar", "SpinSpout_ForceShowAccuracyBar",
+            ForceShowAccuracyBar.Value, value =>
+        {
+            ForceShowAccuracyBar.Value = value;
+            TimingBarPatches.UpdateLayerCulling();
+        });
         #endregion
         
         UIHelper.CreateSectionHeader(modGroup, "VRHeader", "SpinSpout_VR", false);
