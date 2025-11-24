@@ -7,29 +7,23 @@ namespace SpinSpout.Patches;
 [HarmonyPatch]
 internal class CameraPatches
 {
-    private static Camera ActiveCamera => Plugin.ActiveCamera;
-    private static Camera PreviouslyActiveSpoutCamera => Plugin.PreviouslyActiveSpoutCamera;
-    private static Camera PreviouslyActiveSecondarySpoutCamera => Plugin.PreviouslyActiveSecondarySpoutCamera;
-    private static Transform PreviouslyActiveSpoutCameraTransform => Plugin.PreviouslyActiveSpoutCameraTransform;
-    private static Transform PreviouslyActiveSecondarySpoutCameraTransform => Plugin.PreviouslyActiveSecondarySpoutCameraTransform;
-    
     [HarmonyPatch(typeof(Camera), nameof(Camera.fieldOfView), MethodType.Setter)]
     [HarmonyPostfix]
     // ReSharper disable once InconsistentNaming
     private static void FixFieldOfView(Camera __instance, ref float value)
     {
-        if (__instance != ActiveCamera)
+        if (__instance != Plugin.ActiveCamera)
         {
             return;
         }
         
-        if (PreviouslyActiveSpoutCamera != null && !Plugin.FieldOfViewIsStatic.Value)
+        if (Plugin.PreviouslyActiveSpoutCamera != null && !Plugin.FieldOfViewIsStatic.Value)
         {
-            PreviouslyActiveSpoutCamera.fieldOfView = value;
+            Plugin.PreviouslyActiveSpoutCamera.fieldOfView = value;
         }
-        if (PreviouslyActiveSecondarySpoutCamera != null && !Plugin.SecondaryFieldOfViewIsStatic.Value)
+        if (Plugin.PreviouslyActiveSecondarySpoutCamera != null && !Plugin.SecondaryFieldOfViewIsStatic.Value)
         {
-            PreviouslyActiveSecondarySpoutCamera.fieldOfView = value;
+            Plugin.PreviouslyActiveSecondarySpoutCamera.fieldOfView = value;
         }
     }
 
@@ -43,8 +37,8 @@ internal class CameraPatches
             return;
         }
 
-        PreviouslyActiveSpoutCameraTransform.gameObject.TryGetComponent(out Skybox skybox);
-        PreviouslyActiveSecondarySpoutCameraTransform.gameObject.TryGetComponent(out Skybox secondarySkybox);
+        Plugin.PreviouslyActiveSpoutCameraTransform.gameObject.TryGetComponent(out Skybox skybox);
+        Plugin.PreviouslyActiveSecondarySpoutCameraTransform.gameObject.TryGetComponent(out Skybox secondarySkybox);
 
         if (skybox == __instance)
         {
