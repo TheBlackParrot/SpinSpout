@@ -5,7 +5,6 @@ using HarmonyLib;
 using SpinSpout.Spout;
 using Unity.XR.CoreUtils;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 namespace SpinSpout;
@@ -246,7 +245,7 @@ public partial class Plugin : BaseUnityPlugin
             mainCamera.targetTexture = _mainCameraRenderTexture;
             
             UniversalAdditionalCameraData originalCameraData = originalCamera.GetComponent<UniversalAdditionalCameraData>();
-            UniversalAdditionalCameraData addtlCameraData = currentlyActiveSpoutCameraObject.AddComponent<UniversalAdditionalCameraData>();
+            UniversalAdditionalCameraData addtlCameraData = mainCamera.GetUniversalAdditionalCameraData();
             addtlCameraData.volumeStack = originalCameraData.volumeStack;
             addtlCameraData.volumeLayerMask = originalCameraData.volumeLayerMask;
             addtlCameraData.stopNaN = originalCameraData.stopNaN;
