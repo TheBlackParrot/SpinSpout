@@ -22,6 +22,8 @@ public partial class Plugin : BaseUnityPlugin
 
     private static Shader _blitShader;
 
+    private static string CurrentState;
+
     private void Awake()
     {
         Logger = base.Logger;
@@ -48,6 +50,23 @@ public partial class Plugin : BaseUnityPlugin
         UpdateRenderTexture();
         
         MainCamera.OnCurrentCameraChanged += MainCameraOnOnCurrentCameraChanged;
+
+        GameState.OnStateBecameActive += state =>
+        {
+            // we're only interested in these two
+            switch (state.StateName)
+            {
+                case "PlayingTrack":
+                    DetermineIfCamerasShouldBeActive(true);
+                    CurrentState = state.StateName;
+                    break;
+                
+                case "WorldMenu":
+                    DetermineIfCamerasShouldBeActive(false);
+                    CurrentState = state.StateName;
+                    break;
+            }
+        };
     }
 
     private void OnDestroy()
@@ -67,6 +86,29 @@ public partial class Plugin : BaseUnityPlugin
         }
         
         HarmonyPatcher.UnpatchSelf();
+    }
+
+    internal static void DetermineIfCamerasShouldBeActive(bool isGameplay)
+    {
+        foreach (TextureSpoutSender textureSpoutSender in FindObjectsByType<TextureSpoutSender>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (textureSpoutSender.gameObject.name == "Spectator Cam")
+            {
+                continue;
+            }
+
+            bool isMainCamera = textureSpoutSender.gameObject.name == "MainCameraSpoutObject(Clone)";
+            if (textureSpoutSender.gameObject.TryGetComponent(out Camera camera))
+            {
+                camera.enabled = (isMainCamera ? PrimaryToggleMode.Value : SecondaryToggleMode.Value) switch
+                {
+                    SpoutToggleMode.Always => true,
+                    SpoutToggleMode.MenuOnly => !isGameplay,
+                    SpoutToggleMode.GameplayOnly => isGameplay,
+                    _ => camera.enabled
+                };
+            }
+        }
     }
 
     private static void UpdateRenderTexture()

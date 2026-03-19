@@ -9,6 +9,13 @@ using UnityEngine;
 
 namespace SpinSpout;
 
+public enum SpoutToggleMode
+{
+    Always = 0,
+    MenuOnly = 1,
+    GameplayOnly = 2
+}
+
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
 public partial class Plugin
 {
@@ -46,6 +53,9 @@ public partial class Plugin
     public static ConfigEntry<bool> TakeOverVRSpectatorCamera;
     public static ConfigEntry<int> VRSpectatorWidth;
     public static ConfigEntry<int> VRSpectatorHeight;
+    
+    public static ConfigEntry<SpoutToggleMode> PrimaryToggleMode;
+    public static ConfigEntry<SpoutToggleMode> SecondaryToggleMode;
 
     private void RegisterConfigEntries()
     {
@@ -53,9 +63,15 @@ public partial class Plugin
         
         Enabled = Config.Bind("General", nameof(Enabled), true, "Enable the Spout2 camera output");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(Enabled)}", "Enabled");
+        PrimaryToggleMode = Config.Bind("General", nameof(PrimaryToggleMode), SpoutToggleMode.Always,
+            "When to enable the primary camera");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(PrimaryToggleMode)}", "When to enable the primary camera");
         SecondaryCameraEnabled = Config.Bind("General", nameof(SecondaryCameraEnabled), false,
             "Enable a secondary Spout2 camera output");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(SecondaryCameraEnabled)}", "Enable secondary camera");
+        SecondaryToggleMode = Config.Bind("General", nameof(SecondaryToggleMode), SpoutToggleMode.Always,
+            "When to enable the secondary camera");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(SecondaryToggleMode)}", "When to enable the secondary camera");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}ResolutionHeader", "Resolution");
 
@@ -156,6 +172,16 @@ public partial class Plugin
         });
         #endregion
         
+        #region PrimaryToggleMode
+        CustomGroup primaryToggleModeGroup = UIHelper.CreateGroup(modGroup, "PrimaryToggleModeGroup");
+        UIHelper.CreateSmallMultiChoiceButton(primaryToggleModeGroup, nameof(PrimaryToggleMode), $"{TRANSLATION_PREFIX}{nameof(PrimaryToggleMode)}",
+            PrimaryToggleMode.Value, value =>
+            {
+                PrimaryToggleMode.Value = value;
+                DetermineIfCamerasShouldBeActive(CurrentState == "PlayingTrack");
+            });
+        #endregion
+        
         #region SecondaryCameraEnabled
         CustomGroup secondaryCameraEnabledGroup = UIHelper.CreateGroup(modGroup, "SecondaryCameraEnabledGroup");
         secondaryCameraEnabledGroup.LayoutDirection = Axis.Horizontal;
@@ -179,6 +205,16 @@ public partial class Plugin
                 }
             }
         });
+        #endregion
+        
+        #region SecondaryToggleMode
+        CustomGroup secondaryToggleModeGroup = UIHelper.CreateGroup(modGroup, "SecondaryToggleModeGroup");
+        UIHelper.CreateSmallMultiChoiceButton(secondaryToggleModeGroup, nameof(SecondaryToggleMode), $"{TRANSLATION_PREFIX}{nameof(SecondaryToggleMode)}",
+            SecondaryToggleMode.Value, value =>
+            {
+                SecondaryToggleMode.Value = value;
+                DetermineIfCamerasShouldBeActive(CurrentState == "PlayingTrack");
+            });
         #endregion
         
         UIHelper.CreateSectionHeader(modGroup, "ResolutionHeader", $"{TRANSLATION_PREFIX}ResolutionHeader", false);
